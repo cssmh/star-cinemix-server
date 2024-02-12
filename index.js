@@ -77,11 +77,19 @@ async function run() {
     });
     // Add to cart button to my cart data to database end
     // get cart data all
-    app.get("/cart", async(req, res) => {
+    app.get("/cart", async (req, res) => {
       const result = await cartCollection.find().toArray();
       res.send(result);
-    })
+    });
     // get cart data all end
+    // delete cart
+    app.delete("/cart/:id", async (req, res) => {
+      const paramsId = req.params.id;
+      const query = { _id: new ObjectId(paramsId) };
+      const result = await cartCollection.deleteOne(query);
+      res.send(result);
+    });
+    // delete cart end
     // main code end
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
