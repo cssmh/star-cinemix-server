@@ -105,7 +105,7 @@ run().catch(console.dir);
 // mongo code end
 
 app.get("/", (req, res) => {
-  res.send("CRUD RUNNING SUCCESSFULLY");
+  res.send("Crud Running Successfully");
 });
 
 app.listen(port, () => {
