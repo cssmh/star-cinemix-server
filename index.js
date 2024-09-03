@@ -16,13 +16,15 @@ const client = new MongoClient(process.env.DB_URI, {
     strict: true,
     deprecationErrors: true,
   },
+  maxPoolSize: 10,
+  connectTimeoutMS: 10000,
 });
 
 async function run() {
   try {
-    // Connect the client to the server	(optional starting in v4.7)
+    // Connect the client to the server
     client.connect();
-    
+
     const cineCollection = client.db("CinemixDB").collection("cinemix");
     const cartCollection = client.db("CinemixDB").collection("mycart");
 
@@ -32,6 +34,7 @@ async function run() {
         res.send(result);
       } catch (error) {
         console.log(error);
+        res.status(500).send("An error occurred while adding data.");
       }
     });
 
@@ -41,10 +44,10 @@ async function run() {
         res.send(result);
       } catch (error) {
         console.log(error);
+        res.status(500).send("An error occurred while fetching data.");
       }
     });
 
-    // find a document to update, first get single one
     app.get("/cine/:id", async (req, res) => {
       try {
         const query = { _id: new ObjectId(req.params.id) };
@@ -52,9 +55,10 @@ async function run() {
         res.send(result);
       } catch (error) {
         console.log(error);
+        res.status(500).send("An error occurred while fetching the document.");
       }
     });
-    
+
     app.put("/cine/:id", async (req, res) => {
       try {
         const filter = { _id: new ObjectId(req.params.id) };
@@ -78,54 +82,51 @@ async function run() {
         res.send(result);
       } catch (error) {
         console.log(error);
+        res.status(500).send("An error occurred while updating the document.");
       }
     });
 
-    // Add to cart button to my cart data to database
     app.post("/cart", async (req, res) => {
       try {
-        const getDataFromClient = req.body;
-        const result = await cartCollection.insertOne(getDataFromClient);
+        const result = await cartCollection.insertOne(req.body);
         res.send(result);
       } catch (error) {
         console.log(error);
+        res.status(500).send("An error occurred while adding to cart.");
       }
     });
-    
-    // get cart data all
+
     app.get("/cart", async (req, res) => {
       try {
         const result = await cartCollection.find().toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
+        res.status(500).send("An error occurred while fetching cart data.");
       }
     });
-    
-    // delete cart
+
     app.delete("/cart/:id", async (req, res) => {
-       try {
+      try {
         const query = { _id: new ObjectId(req.params.id) };
         const result = await cartCollection.deleteOne(query);
         res.send(result);
-       } catch (error) {
+      } catch (error) {
         console.log(error);
-       }
+        res.status(500).send("An error occurred while deleting cart data.");
+      }
     });
-    // delete cart end
-    
-    // Send a ping to confirm a successful connection
+
+    // Ping the database to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    // console.log(
-    //   "Pinged your deployment. You successfully connected to MongoDB!"
-    // );
+    // console.log("Pinged your deployment. Successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
   }
 }
+
 run().catch(console.dir);
-// mongo code end
 
 app.get("/", (req, res) => {
   res.send("BOOK YOUR TICKET");
