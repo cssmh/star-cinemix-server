@@ -5,18 +5,26 @@ const app = express();
 require("dotenv").config();
 const port = process.env.PORT || 5000;
 
-// middleware
-app.use(cors());
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",
+      "https://cinemix-2ceee.web.app",
+      "https://cinemamix.netlify.app",
+      "https://cinemix.surge.sh",
+    ],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(process.env.DB_URI, {
+const client = new MongoClient(process.env.URI, {
   serverApi: {
     version: ServerApiVersion.v1,
     strict: true,
     deprecationErrors: true,
   },
-  maxPoolSize: 10,
   connectTimeoutMS: 10000,
 });
 
@@ -96,9 +104,10 @@ async function run() {
       }
     });
 
-    app.get("/cart", async (req, res) => {
+    app.get("/cart/:email", async (req, res) => {
       try {
-        const result = await cartCollection.find().toArray();
+        const query = { user_email: req.params.email };
+        const result = await cartCollection.find(query).toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
@@ -119,7 +128,7 @@ async function run() {
 
     // Ping the database to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    // console.log("Pinged your deployment. Successfully connected to MongoDB!");
+    console.log("Pinged your deployment. Successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
