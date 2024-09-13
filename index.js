@@ -8,6 +8,7 @@ const port = process.env.PORT || 5000;
 app.use(
   cors({
     origin: [
+      "http://localhost:5173",
       "https://cinemix-2ceee.web.app",
       "https://cinemamix.netlify.app",
       "https://cinemix.surge.sh",
@@ -87,6 +88,22 @@ async function run() {
       try {
         const result = await movieCollection.find().toArray();
         res.send(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).send("An error occurred while fetching data.");
+      }
+    });
+
+    app.get("/type-movies/:type", async (req, res) => {
+      try {
+        const getType = req.params.type;
+        const result = await cineCollection
+          .find({
+            $expr: { $eq: [{ $toLower: "$media" }, getType] },
+          })
+          .toArray();
+          
+        res.send({ result, getType });
       } catch (error) {
         console.log(error);
         res.status(500).send("An error occurred while fetching data.");
@@ -175,7 +192,7 @@ async function run() {
 
     // Ping the database to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    // console.log("Pinged your deployment. Successfully connected to MongoDB!");
+    console.log("Pinged your deployment. Successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
