@@ -3,12 +3,11 @@ const cors = require("cors");
 const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const app = express();
 require("dotenv").config();
-const port = process.env.PORT || 5000;
+const port = 5000;
 
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
       "https://cinemix-2ceee.web.app",
       "https://cinemamix.netlify.app",
       "https://cinemix.surge.sh",
@@ -27,25 +26,25 @@ const client = new MongoClient(process.env.URI, {
   },
 });
 
-// Event listeners for connection
-client.connect((err) => {
-  if (err) {
-    console.error("Failed to connect to MongoDB", err);
-    return;
-  }
-  console.log("Connected to MongoDB");
-});
-
 async function run() {
   try {
     // Connect the client to the server
     // client.connect();
 
     const cineCollection = client.db("CinemixDB").collection("cinemix");
-    const movieCollection = client.db("CinemixDB").collection("latestMovies");
-    const cartCollection = client.db("CinemixDB").collection("mycart");
+    const bookingCollection = client.db("CinemixDB").collection("mycart");
 
-    app.get("/featured-movies", async (req, res) => {
+    app.get("/now-playing", async (req, res) => {
+      try {
+        const result = await cineCollection.find().sort({ _id: -1 }).toArray();
+        res.send(result);
+      } catch (error) {
+        console.log(error);
+        res.status(500).send("An error occurred while fetching data.");
+      }
+    });
+
+    app.get("/top-movies", async (req, res) => {
       try {
         const result = await cineCollection.find().toArray();
         res.send(result);
@@ -62,7 +61,7 @@ async function run() {
           return res.status(400).send("Invalid item IDs provided.");
         }
         const objectIds = selectedItems.map((id) => new ObjectId(id));
-        const result = await cartCollection.updateMany(
+        const result = await bookingCollection.updateMany(
           { _id: { $in: objectIds }, payment: { $ne: "success" } },
           { $set: { payment: "success" } }
         );
@@ -84,31 +83,21 @@ async function run() {
       }
     });
 
-    app.get("/latest-movies", async (req, res) => {
-      try {
-        const result = await movieCollection.find().toArray();
-        res.send(result);
-      } catch (error) {
-        console.log(error);
-        res.status(500).send("An error occurred while fetching data.");
-      }
-    });
+    // app.get("/type-movies/:type", async (req, res) => {
+    //   try {
+    //     const getType = req.params.type;
+    //     const result = await cineCollection
+    //       .find({
+    //         $expr: { $eq: [{ $toLower: "$media" }, getType] },
+    //       })
+    //       .toArray();
 
-    app.get("/type-movies/:type", async (req, res) => {
-      try {
-        const getType = req.params.type;
-        const result = await cineCollection
-          .find({
-            $expr: { $eq: [{ $toLower: "$media" }, getType] },
-          })
-          .toArray();
-          
-        res.send({ result, getType });
-      } catch (error) {
-        console.log(error);
-        res.status(500).send("An error occurred while fetching data.");
-      }
-    });
+    //     res.send({ result, getType });
+    //   } catch (error) {
+    //     console.log(error);
+    //     res.status(500).send("An error occurred while fetching data.");
+    //   }
+    // });
 
     app.get("/cine", async (req, res) => {
       try {
@@ -158,9 +147,9 @@ async function run() {
       }
     });
 
-    app.post("/add-cart", async (req, res) => {
+    app.post("/add-booking", async (req, res) => {
       try {
-        const result = await cartCollection.insertOne(req.body);
+        const result = await bookingCollection.insertOne(req.body);
         res.send(result);
       } catch (error) {
         console.log(error);
@@ -168,10 +157,10 @@ async function run() {
       }
     });
 
-    app.get("/cart/:email", async (req, res) => {
+    app.get("/my-bookings/:email", async (req, res) => {
       try {
         const query = { user_email: req.params.email };
-        const result = await cartCollection.find(query).toArray();
+        const result = await bookingCollection.find(query).toArray();
         res.send(result);
       } catch (error) {
         console.log(error);
@@ -179,10 +168,10 @@ async function run() {
       }
     });
 
-    app.delete("/cart/:id", async (req, res) => {
+    app.delete("/my-booking/:id", async (req, res) => {
       try {
         const query = { _id: new ObjectId(req.params.id) };
-        const result = await cartCollection.deleteOne(query);
+        const result = await bookingCollection.deleteOne(query);
         res.send(result);
       } catch (error) {
         console.log(error);
@@ -192,7 +181,7 @@ async function run() {
 
     // Ping the database to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
-    console.log("Pinged your deployment. Successfully connected to MongoDB!");
+    // console.log("Pinged your deployment. Successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
     // await client.close();
