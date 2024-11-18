@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const router = require("./routes/bookRoutes");
+const router = require("./routes/cineRoutes");
 const app = express();
 require("dotenv").config();
 const port = 5000;
@@ -8,7 +8,6 @@ const port = 5000;
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",
       "https://cinemix-2ceee.web.app",
       "https://cinemamix.netlify.app",
       "https://cinemix.surge.sh",
