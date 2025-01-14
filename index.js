@@ -8,6 +8,7 @@ const port = 5000;
 app.use(
   cors({
     origin: [
+      "http://localhost:5173",
       "https://cinemix-2ceee.web.app",
       "https://cinemamix.netlify.app",
       "https://cinemix.surge.sh",
